@@ -677,7 +677,7 @@ class Runtime
      * @return mixed The result of the evaluated Eel expression
      * @throws Exception
      */
-    protected function evaluateEelExpression($expression, AbstractFusionObject $contextObject = null)
+    protected function evaluateEelExpression($expression, ?AbstractFusionObject $contextObject = null)
     {
         if ($expression[0] !== '$' || $expression[1] !== '{') {
             // We still assume this is an EEL expression and wrap the markers for backwards compatibility.
@@ -690,6 +690,16 @@ class Runtime
             throw new Exception('Context variable "this" not allowed, as it is already reserved for a pointer to the current Fusion object.', 1344325044);
         }
         $contextVariables['this'] = $contextObject;
+
+        if (class_exists(\Neos\Neos\Domain\Model\Neos9NodeBasedRenderingModeStub::class)) {
+            // Temporary hack, discard with Neos 9.0 with the proper implementation of renderingMode and Fusion Globals.
+            $anyLikelyNode = $contextVariables['site'] ?? $contextVariables['documentNode'] ?? $contextVariables['node'] ?? null;
+            if ($anyLikelyNode instanceof \Neos\ContentRepository\Domain\Model\Node) {
+                $contextVariables['renderingMode'] = \Neos\Neos\Domain\Model\Neos9NodeBasedRenderingModeStub::createFromLegacyNodeContentContext(
+                    $anyLikelyNode->getContext()
+                );
+            }
+        }
 
         /** may have to be phpstan-ignore-next-line'd: the mind of the great phpstan can and will not comprehend this */
         if ($this->eelEvaluator instanceof \Neos\Flow\ObjectManagement\DependencyInjection\DependencyProxy) {
@@ -782,7 +792,7 @@ class Runtime
      * @param AbstractFusionObject $contextObject
      * @return mixed
      */
-    protected function evaluateProcessors($valueToProcess, $configurationWithEventualProcessors, $fusionPath, AbstractFusionObject $contextObject = null)
+    protected function evaluateProcessors($valueToProcess, $configurationWithEventualProcessors, $fusionPath, ?AbstractFusionObject $contextObject = null)
     {
         $processorConfiguration = $configurationWithEventualProcessors['__meta']['process'];
         $positionalArraySorter = new PositionalArraySorter($processorConfiguration, '__meta.position');
@@ -820,7 +830,7 @@ class Runtime
      * @param AbstractFusionObject $contextObject
      * @return boolean
      */
-    protected function evaluateIfCondition($configurationWithEventualIf, $configurationPath, AbstractFusionObject $contextObject = null)
+    protected function evaluateIfCondition($configurationWithEventualIf, $configurationPath, ?AbstractFusionObject $contextObject = null)
     {
         foreach ($configurationWithEventualIf['__meta']['if'] as $conditionKey => $conditionValue) {
             $conditionValue = $this->evaluate($configurationPath . '/__meta/if/' . $conditionKey, $contextObject, self::BEHAVIOR_EXCEPTION);

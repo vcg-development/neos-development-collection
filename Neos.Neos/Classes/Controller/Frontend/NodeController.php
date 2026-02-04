@@ -101,7 +101,7 @@ class NodeController extends ActionController
      * @Flow\SkipCsrfProtection
      * @Flow\IgnoreValidation("node")
      */
-    public function showAction(NodeInterface $node = null)
+    public function showAction(?NodeInterface $node = null)
     {
         if ($node === null || !$node->getContext()->isLive()) {
             throw new NodeNotFoundException('The requested node does not exist or isn\'t accessible to the current user', 1430218623);
@@ -135,10 +135,17 @@ class NodeController extends ActionController
      * @throws NeosException | NodeNotFoundException | SessionNotStartedException | UnresolvableShortcutException
      * @Flow\IgnoreValidation("node")
      */
-    public function previewAction(NodeInterface $node = null)
+    public function previewAction(?NodeInterface $node = null)
     {
         if ($node === null) {
             throw new NodeNotFoundException('The requested node does not exist or isn\'t accessible to the current user', 1430218623);
+        }
+
+        // hide hidden and removed nodes in preview modes
+        if ($node->getContext()->getCurrentRenderingMode()->isPreview()) {
+            $contextProperties = $node->getContext()->getProperties();
+            $modifiedContext = $this->contextFactory->create(array_merge($contextProperties, ['invisibleContentShown' => false, 'removedContentShown' => false]));
+            $node = $modifiedContext->getNodeByIdentifier($node->getIdentifier());
         }
 
         $inBackend = $node->getContext()->isInBackend();

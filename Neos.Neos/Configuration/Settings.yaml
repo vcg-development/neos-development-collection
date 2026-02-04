@@ -313,6 +313,7 @@ Neos:
 
       backendLoginForm:
         backgroundImage: 'resource://Neos.Neos/Public/Images/Login/Wallpaper.webp'
+        backgroundImageAttribution: 'Photo of Tuscan Archipelago / Italy by Vera Göpfert.'
         logoImage: 'resource://Neos.Neos/Public/Images/Login/Logo.svg'
         stylesheets:
           'Neos.Neos:DefaultStyles': 'resource://Neos.Neos/Public/Styles/Login.css'
@@ -370,6 +371,9 @@ Neos:
               new:
                 label: 'Neos.Neos:Modules:users.actions.new.label'
                 title: 'Neos.Neos:Modules:users.actions.new.title'
+            settings:
+              pagination:
+                itemsPerPage: 10
           packages:
             label: 'Neos.Neos:Modules:packages.label'
             controller: 'Neos\Neos\Controller\Module\Administration\PackagesController'
@@ -386,6 +390,11 @@ Neos:
               newSite:
                 label: 'Neos.Neos:Modules:sites.actions.newSite.label'
                 title: 'Neos.Neos:Modules:sites.actions.newSite.title'
+            settings:
+              baseNodeType: 'Neos.Neos:Site'
+              # Options are disabled by default with Neos 8.4 as these functionalities were removed in Neos 9.0
+              enableLegacyPackageImport: false
+              enableLegacyPackageCreation: false
           configuration:
             label: 'Neos.Neos:Modules:configuration.label'
             controller: 'Neos\Neos\Controller\Module\Administration\ConfigurationController'
@@ -589,6 +598,7 @@ Neos:
       Neos.Rendering: Neos\Neos\Fusion\Helper\RenderingHelper
       Neos.Caching: Neos\Neos\Fusion\Helper\CachingHelper
       Neos.Backend: Neos\Neos\Fusion\Helper\BackendHelper
+      Neos.Site: Neos\Neos\Fusion\Helper\SiteHelper
 
   # DocTools is a tool used by Neos Developers to help with a variety of documentation tasks.
   # These settings are only used in generating Documentation.
@@ -617,7 +627,7 @@ Neos:
     commandReferences:
       'Neos:NeosCommands':
         title: 'Neos Command Reference'
-        packageKeys:
+        packageKeys: # These are actually no package keys, but rather command controller identifiers extracted out of namespaces.
           'Neos.Flow': true
           'Neos.Party': true
           'Neos.FluidAdaptor': true
@@ -625,8 +635,11 @@ Neos:
           'Neos.Welcome': true
           'Neos.Media': true
           'Neos.ContentRepository': true
+          'Neos.ContentRepository.Migration': true
           'Neos.SiteKickstarter': true
           'Neos.Neos': true
+          'Neos.Neos.Setup': true
+          'Neos.Setup': true
         savePathAndFilename: '%FLOW_PATH_PACKAGES%Neos/Neos.Neos/Documentation/References/CommandReference.rst'
     references:
       'TYPO3Fluid:ViewHelpers':

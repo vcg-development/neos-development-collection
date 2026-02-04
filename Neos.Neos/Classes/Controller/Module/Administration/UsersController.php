@@ -113,12 +113,40 @@ class UsersController extends AbstractModuleController
      * @param string $sortDirection
      * @return void
      */
-    public function indexAction(string $searchTerm = '', string $sortBy = 'accounts.accountIdentifier', string $sortDirection = QueryInterface::ORDER_ASCENDING): void
-    {
+    public function indexAction(
+        string $searchTerm = '',
+        string $sortBy = 'accounts.accountIdentifier',
+        string $sortDirection = QueryInterface::ORDER_ASCENDING,
+        ?string $role = null,
+    ): void {
+        $allowedRoles = $this->getAllowedRoles();
+
         if (empty($searchTerm)) {
             $users = $this->userService->getUsers($sortBy, $sortDirection);
         } else {
             $users = $this->userService->searchUsers($searchTerm, $sortBy, $sortDirection);
+        }
+
+        if ($role) {
+            $roleExists = false;
+            foreach ($allowedRoles as $allowedRole) {
+                if ($allowedRole->getIdentifier() === $role) {
+                    $roleExists = true;
+                    break;
+                }
+            }
+            if (!$roleExists) {
+                throw new NoSuchRoleException(sprintf('The role "%s" does not exist.', $role), 1723796893);
+            }
+
+            $query = $users->getQuery();
+            $constraints = $query->getConstraint();
+            $users = $query
+                ->matching($query->logicalAnd(
+                    $constraints,
+                    // FIXME: The like query could yield incorrect results if the role identifier is a substring of another role identifier
+                    $query->like('accounts.roleIdentifiers', '%' . $role . '%', false),
+                ))->execute();
         }
 
         $this->view->assignMultiple([
@@ -127,6 +155,9 @@ class UsersController extends AbstractModuleController
             'searchTerm' => $searchTerm,
             'sortBy' => $sortBy,
             'sortDirection' => $sortDirection,
+            'settings' => $this->moduleConfiguration['settings'],
+            'allowedRoles' => $allowedRoles,
+            'role' => $role,
         ]);
     }
 
@@ -150,7 +181,7 @@ class UsersController extends AbstractModuleController
      * @param User $user
      * @return void
      */
-    public function newAction(User $user = null): void
+    public function newAction(?User $user = null): void
     {
         $this->view->assignMultiple([
             'currentUser' => $this->currentUser,
@@ -177,7 +208,7 @@ class UsersController extends AbstractModuleController
      * @Flow\Validate(argumentName="username", type="\Neos\Neos\Validation\Validator\UserDoesNotExistValidator")
      * @Flow\Validate(argumentName="password", type="\Neos\Neos\Validation\Validator\PasswordValidator", options={ "allowEmpty"=0, "minimum"=1, "maximum"=255 })
      */
-    public function createAction(string $username, array $password, User $user, array $roleIdentifiers, string $authenticationProviderName = null): void
+    public function createAction(string $username, array $password, User $user, array $roleIdentifiers, ?string $authenticationProviderName = null): void
     {
         $currentUserRoles = $this->userService->getAllRoles($this->currentUser);
         $isCreationAllowed = $this->userService->currentUserIsAdministrator() || count(array_diff($roleIdentifiers, $currentUserRoles)) === 0;
@@ -224,7 +255,7 @@ class UsersController extends AbstractModuleController
     {
         if (!$this->isEditingAllowed($user)) {
             $this->addFlashMessage(
-                $this->translator->translateById('users.userEditingDenied.editing.body', [htmlspecialchars($user->getName())], null, null, 'Modules', 'Neos.Neos'),
+                $this->translator->translateById('users.userEditingDenied.editing.body', [htmlspecialchars($user->getName()->getFullName())], null, null, 'Modules', 'Neos.Neos'),
                 $this->translator->translateById('users.userEditingDenied.editing.‚title', [], null, null, 'Modules', 'Neos.Neos'),
                 Message::SEVERITY_ERROR,
                 [],
@@ -479,7 +510,6 @@ class UsersController extends AbstractModuleController
         $user->removeElectronicAddress($electronicAddress);
         $this->userService->updateUser($user);
 
-        /** @var PersonName $personName */
         $personName = $user->getName();
         $name = $personName ? $personName->getFullName() : '';
         $this->addFlashMessage(
@@ -503,7 +533,6 @@ class UsersController extends AbstractModuleController
             $electronicAddressTypes[$type] = $type;
         }
         $electronicAddressUsageTypes = [];
-        $translationHelper = new TranslationHelper();
         foreach ($electronicAddress->getAvailableUsageTypes() as $type) {
             $electronicAddressUsageTypes[$type] = $type;
         }

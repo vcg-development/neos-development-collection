@@ -120,19 +120,19 @@ class NodeImportService
         'dimensionValues' => [],
         'properties' => [],
         'hiddenBeforeDateTime' => [
-            'columnType' => Types::DATE_IMMUTABLE
+            'columnType' => Types::DATETIME_IMMUTABLE
         ],
         'hiddenAfterDateTime' => [
-            'columnType' => Types::DATE_IMMUTABLE
+            'columnType' => Types::DATETIME_IMMUTABLE
         ],
         'creationDateTime' => [
-            'columnType' => Types::DATE_IMMUTABLE
+            'columnType' => Types::DATETIME_IMMUTABLE
         ],
         'lastModificationDateTime' => [
-            'columnType' => Types::DATE_IMMUTABLE
+            'columnType' => Types::DATETIME_IMMUTABLE
         ],
         'lastPublicationDateTime' => [
-            'columnType' => Types::DATE_IMMUTABLE
+            'columnType' => Types::DATETIME_IMMUTABLE
         ],
         'accessRoles' => []
     ];
@@ -321,7 +321,7 @@ class NodeImportService
             case 'lastModificationDateTime':
             case 'lastPublicationDateTime':
                 $stringValue = trim($xmlReader->readString());
-                $dateValue = $this->propertyMapper->convert($stringValue, 'DateTime', $this->propertyMappingConfiguration);
+                $dateValue = $this->propertyMapper->convert($stringValue, 'DateTimeImmutable', $this->propertyMappingConfiguration);
                 $this->nodeDataStack[count($this->nodeDataStack) - 1][$elementName] = $dateValue;
                 break;
             default:

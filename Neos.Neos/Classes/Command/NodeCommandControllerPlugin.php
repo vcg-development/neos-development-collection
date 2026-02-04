@@ -12,6 +12,7 @@ namespace Neos\Neos\Command;
  */
 
 use Neos\ContentRepository\Command\EventDispatchingNodeCommandControllerPluginInterface;
+use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\ContentRepository\Exception\NodeException;
 use Neos\Eel\Exception as EelException;
 use Neos\Eel\FlowQuery\FlowQuery;
@@ -65,6 +66,12 @@ class NodeCommandControllerPlugin implements EventDispatchingNodeCommandControll
      * @var NodeDataRepository
      */
     protected $nodeDataRepository;
+
+    /**
+     * @Flow\Inject
+     * @var NodeTypeManager
+     */
+    protected $nodeTypeManager;
 
     /**
      * @Flow\Inject
@@ -159,7 +166,7 @@ HELPTEXT;
      * @param string $only Only execute the given check or checks (comma separated)
      * @return void
      */
-    public function invokeSubCommand($controllerCommandName, ConsoleOutput $output, NodeType $nodeType = null, $workspaceName = 'live', $dryRun = false, $cleanup = true, $skip = null, $only = null)
+    public function invokeSubCommand($controllerCommandName, ConsoleOutput $output, ?NodeType $nodeType = null, $workspaceName = 'live', $dryRun = false, $cleanup = true, $skip = null, $only = null)
     {
         /** @noinspection PhpDeprecationInspection This is only set for backwards compatibility */
         $this->output = $output;
@@ -207,7 +214,7 @@ HELPTEXT;
         if ($sitesNode === null) {
             $taskDescription = sprintf('Create missing site node "<i>%s</i>"', SiteService::SITES_ROOT_PATH);
             $taskClosure = function () use ($rootNode) {
-                $rootNode->createNode(NodePaths::getNodeNameFromPath(SiteService::SITES_ROOT_PATH));
+                $rootNode->createNode(NodePaths::getNodeNameFromPath(SiteService::SITES_ROOT_PATH), $this->nodeTypeManager->getNodeType('Neos.Neos:Sites'));
                 $this->persistenceManager->persistAll();
             };
             $this->dispatch(self::EVENT_TASK, $taskDescription, $taskClosure);

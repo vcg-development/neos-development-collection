@@ -231,10 +231,10 @@ class SitesController extends AbstractModuleController
      * @Flow\IgnoreValidation("$site")
      * @return void
      */
-    public function newSiteAction(Site $site = null)
+    public function newSiteAction(?Site $site = null)
     {
         $sitePackages = $this->packageManager->getFilteredPackages('available', 'neos-site');
-        $documentNodeTypes = $this->nodeTypeManager->getSubNodeTypes('Neos.Neos:Document', false);
+        $documentNodeTypes = $this->nodeTypeManager->getSubNodeTypes($this->moduleConfiguration['settings']['baseNodeType'] ?? 'Neos.Neos:Site', false);
 
         $generatorServiceIsAvailable = $this->packageManager->isPackageAvailable('Neos.SiteKickstarter');
         $generatorServices = [];
@@ -256,7 +256,8 @@ class SitesController extends AbstractModuleController
             'documentNodeTypes' => $documentNodeTypes,
             'site' => $site,
             'generatorServiceIsAvailable' => $generatorServiceIsAvailable,
-            'generatorServices' => $generatorServices
+            'generatorServices' => $generatorServices,
+            'settings' => $this->moduleConfiguration['settings'],
         ]);
     }
 
@@ -397,7 +398,7 @@ class SitesController extends AbstractModuleController
         $this->persistenceManager->persistAll();
         $sitesNode = $rootNode->getNode(SiteService::SITES_ROOT_PATH);
         if ($sitesNode === null) {
-            $sitesNode = $rootNode->createNode(NodePaths::getNodeNameFromPath(SiteService::SITES_ROOT_PATH));
+            $sitesNode = $rootNode->createNode(NodePaths::getNodeNameFromPath(SiteService::SITES_ROOT_PATH), $this->nodeTypeManager->getNodeType('Neos.Neos:Sites'));
         }
         $siteNode = $sitesNode->createNode($nodeName, $siteNodeType);
         $siteNode->setProperty('title', $siteName);
@@ -517,7 +518,7 @@ class SitesController extends AbstractModuleController
      * @Flow\IgnoreValidation("$domain")
      * @return void
      */
-    public function newDomainAction(Domain $domain = null, Site $site = null)
+    public function newDomainAction(?Domain $domain = null, ?Site $site = null)
     {
         $this->view->assignMultiple([
             'domain' => $domain,

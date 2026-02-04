@@ -16,6 +16,7 @@ use Neos\Eel\ProtectedContextAwareInterface;
 use Neos\Neos\Exception;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\NodeType;
+use Neos\Neos\Fusion\Cache\NodeCacheEntryIdentifier;
 
 /**
  * Caching helper to make cache tag generation easier.
@@ -82,7 +83,7 @@ class CachingHelper implements ProtectedContextAwareInterface
      * @return string
      *
      */
-    public function nodeTagForIdentifier(string $identifier, NodeInterface $contextNode = null): string
+    public function nodeTagForIdentifier(string $identifier, ?NodeInterface $contextNode = null): string
     {
         $workspaceTag = '';
         if ($contextNode instanceof NodeInterface) {
@@ -166,6 +167,21 @@ class CachingHelper implements ProtectedContextAwareInterface
     public function renderWorkspaceTagForContextNode(string $workspaceName)
     {
         return '%' . md5($workspaceName) . '%';
+    }
+
+    /**
+     * ForwardCompatiblity for Neos 9.0
+     *
+     * Generate a `@cache` entry identifier for a given node:
+     *
+     *     entryIdentifier {
+     *       documentNode = ${Neos.Caching.entryIdentifierForNode(documentNode)}
+     *     }
+     *
+     */
+    public function entryIdentifierForNode(NodeInterface $node): NodeCacheEntryIdentifier
+    {
+        return NodeCacheEntryIdentifier::fromNode($node);
     }
 
     /**

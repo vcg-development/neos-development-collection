@@ -11,8 +11,12 @@ namespace Neos\Neos\Fusion\Helper;
  * source code.
  */
 
-use Neos\Eel\ProtectedContextAwareInterface;
+use Neos\ContentRepository\Domain\Model\Node;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Domain\Model\NodeType;
+use Neos\ContentRepository\Domain\Service\NodeTypeManager;
+use Neos\Eel\ProtectedContextAwareInterface;
+use Neos\Flow\Annotations as Flow;
 use Neos\Neos\Domain\Exception;
 
 /**
@@ -20,6 +24,77 @@ use Neos\Neos\Domain\Exception;
  */
 class NodeHelper implements ProtectedContextAwareInterface
 {
+    /**
+     * @Flow\Inject
+     * @var NodeTypeManager
+     */
+    protected $nodeTypeManager;
+
+    /**
+     * Renders the actual node label based on the NodeType definition in Fusion.
+     */
+    public function label(Node $node): string
+    {
+        return $node->getLabel();
+    }
+
+    /**
+     * @deprecated do not rely on this, as it is rather expensive to calculate
+     */
+    public function depth(Node $node): int
+    {
+        return $node->getDepth();
+    }
+
+    /**
+     * @deprecated do not rely on this, as it is rather expensive to calculate
+     */
+    public function path(Node $node): string
+    {
+        return $node->getPath();
+    }
+
+    /**
+     * Retrieving the NodeType of the given Node.
+     *
+     * If the NodeType schema changed and the NodeType does not exist anymore, NULL is returned.
+     */
+    public function nodeType(Node $node): ?NodeType
+    {
+        $realNodeTypeName = $node->getNodeData()->getNodeTypeNameWithoutFallback();
+
+        if (!$this->nodeTypeManager->hasNodeType($realNodeTypeName)) {
+            return null;
+        }
+
+        return $this->nodeTypeManager->getNodeType($realNodeTypeName);
+    }
+
+    /**
+     * If this node type or any of the direct or indirect super types
+     * has the given name.
+     */
+    public function isOfType(NodeInterface $node, string $nodeType): bool
+    {
+        return $node->getNodeType()->isOfType($nodeType);
+    }
+
+    public function isDisabled(Node $node): bool
+    {
+        return $node->isHidden();
+    }
+
+    /**
+     * In Neos 8.4 it will just return the context path while in Neos 9 the actual json representation of the NodeAddress is returned.
+     * Thus, the code must be likely adjusted still in Neos 9.0
+     *
+     * @internal experimental API without documentation and clear use-case
+     */
+    public function serializedNodeAddress(Node $node): string
+    {
+        return $node->getContextPath();
+    }
+
     /**
      * Check if the given node is already a collection, find collection by nodePath otherwise, throw exception
      * if no content collection could be found
@@ -53,22 +128,9 @@ class NodeHelper implements ProtectedContextAwareInterface
      * @param NodeInterface|null $node
      * @return NodeLabelToken
      */
-    public function labelForNode(NodeInterface $node = null): NodeLabelToken
+    public function labelForNode(?NodeInterface $node = null): NodeLabelToken
     {
         return new NodeLabelToken($node);
-    }
-
-    /**
-     * If this node type or any of the direct or indirect super types
-     * has the given name.
-     *
-     * @param NodeInterface $node
-     * @param string $nodeType
-     * @return bool
-     */
-    public function isOfType(NodeInterface $node, string $nodeType): bool
-    {
-        return $node->getNodeType()->isOfType($nodeType);
     }
 
     /**

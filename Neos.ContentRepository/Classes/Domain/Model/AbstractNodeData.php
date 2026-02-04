@@ -388,6 +388,11 @@ abstract class AbstractNodeData
         return $this->nodeTypeManager->getNodeType($this->nodeType);
     }
 
+    public function getNodeTypeNameWithoutFallback(): string
+    {
+        return $this->nodeType;
+    }
+
     /**
      * @return \DateTime
      */
@@ -416,7 +421,7 @@ abstract class AbstractNodeData
      * @param \DateTimeInterface $lastPublicationDateTime
      * @return void
      */
-    public function setLastPublicationDateTime(\DateTimeInterface $lastPublicationDateTime = null)
+    public function setLastPublicationDateTime(?\DateTimeInterface $lastPublicationDateTime = null)
     {
         $this->lastPublicationDateTime = $lastPublicationDateTime;
     }
@@ -451,7 +456,7 @@ abstract class AbstractNodeData
      * @param \DateTimeInterface $dateTime Date before this node should be hidden
      * @return void
      */
-    public function setHiddenBeforeDateTime(\DateTimeInterface $dateTime = null)
+    public function setHiddenBeforeDateTime(?\DateTimeInterface $dateTime = null)
     {
         if ($this->hiddenBeforeDateTime != $dateTime) {
             $this->hiddenBeforeDateTime = $dateTime;
@@ -475,7 +480,7 @@ abstract class AbstractNodeData
      * @param \DateTimeInterface $dateTime Date after which this node should be hidden or NULL if no such time was set
      * @return void
      */
-    public function setHiddenAfterDateTime(\DateTimeInterface $dateTime = null)
+    public function setHiddenAfterDateTime(?\DateTimeInterface $dateTime = null)
     {
         if ($this->hiddenAfterDateTime != $dateTime) {
             $this->hiddenAfterDateTime = $dateTime;
